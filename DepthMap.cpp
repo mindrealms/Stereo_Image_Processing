@@ -1,5 +1,5 @@
 #include "DepthMap.h"
-#include "boost/range/combine.hpp"
+//#include "boost/range/combine.hpp"
 
 DepthMap::DepthMap(cv::Mat img1, cv::Mat img2) {
     int size = img1.size[0] * img2.size[1];
@@ -20,9 +20,12 @@ DepthMap::DepthMap(cv::Mat img1, cv::Mat img2) {
 void DepthMap::generateMap(cv::Mat &newimg1, cv::Mat &newimg2) {
 
     //undistort images (?)
-    float data1[9] = {4152.073, 0, 1288.147, 0, 4152.073, 973.571, 0, 0, 1};
+    //bicycle
+    //[5299.313 0 1263.818; 0 5299.313 977.763; 0 0 1]
+    //[5299.313 0 1438.004; 0 5299.313 977.763; 0 0 1]
+    float data1[9] = {5299.313, 0, 1263.818, 0, 5299.313, 977.763, 0, 0, 1};
     cv::Mat img1 = undistortImage(_stereo1, data1);
-    float data2[9] = {4152.073, 0, 1501.231, 0, 4152.073, 973.571, 0, 0, 1};
+    float data2[9] = {5299.313, 0, 1438.004, 0, 5299.313, 977.763, 0, 0, 1};
     cv::Mat img2 = undistortImage(_stereo2, data2);
 
     //find keypoints and descriptors (SIFT)
@@ -55,19 +58,28 @@ void DepthMap::generateMap(cv::Mat &newimg1, cv::Mat &newimg2) {
         }
     }
 
-    //draw
+    //draw keypoint matches between images
     cv::Mat img_matches;
     drawMatches(img1, key1, img2, key2, good_matches, img_matches, cv::Scalar(211,9,45), //blue
                 cv::Scalar(255,255,255), std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
-    cv::Mat mask,flat;
-    cv::Mat f_mat = cv::findFundamentalMat(pts1, pts2, cv::FM_LMEDS, 3, 0.99f, mask); //????
+    cv::Mat mask; //(1947, 1, CV_32F);
+    cv::Mat f_mat = cv::findFundamentalMat(pts1, pts2, cv::FM_LMEDS, 3, 0.99f, mask);
 
-    //select only inlier points
-    mask = mask.reshape(1,1); //flatten
-//    pts1 = pts1[1]; //?????????
+    //flatten mask
+    mask = mask.reshape(1,1);
 
-    //find epilines corr. to points in image 2 and to be drawn on 1
+    //filter out outliers
+    cv::Mat inliers1, inliers2;
+    int size = mask.rows*mask.cols;
+    for (int i=0; i<size; i++) {
+        if (mask.at<int>(i) == true) {
+            inliers1.push_back(pts1[i]);
+            inliers2.push_back(pts2[i]);
+        }
+    } //1238 inliers
+
+    //find epilines corr. to points in image 2 and to be drawn on image 1
     cv::Mat lines1, lines2; //r = 1947, c = 1
     cv::computeCorrespondEpilines(pts2, 2, f_mat, lines1);
     cv::computeCorrespondEpilines(pts1, 1, f_mat, lines2);
@@ -99,10 +111,10 @@ void DepthMap::drawEpilines(cv::Mat img1, cv::Mat img2, cv::Mat lines,
     for (int i=0; i<array.size(); i++) {
 //        boost::tuple<cv::Point2f, cv::Point2f, cv::Point2f> asd = tup;
         cv::Scalar color((std::rand())*255,(std::rand())*255,(std::rand())*255);
-//        std::cout << "asd " << std::endl;
-//        //some weird shit here that make no sense at all
 
-        cv::line(img1, pts1[i], pts2[i], color, 1);
+        //some weird shit here that make no sense at all
+
+//        cv::line(img1, pts1[i], pts2[i], color, 1);
         cv::circle(img1, pts1[i], 5, color, -1);
         cv::circle(img2, pts2[i], 5, color, -1);
     }
@@ -110,6 +122,11 @@ void DepthMap::drawEpilines(cv::Mat img1, cv::Mat img2, cv::Mat lines,
     newimg2 = img2; //''
 }
 
+
+
+//cv::Mat DepthMap::renderDepthMap(cv::Mat, ) {
+
+//}
 
 cv::Mat DepthMap::undistortImage(cv::Mat img, void *data) {
 
@@ -126,7 +143,8 @@ cv::Mat DepthMap::undistortImage(cv::Mat img, void *data) {
     // ******************** TEMP ***********************
 
     // I'm not sure where to find distortion coefficients, if there are any
-    // (I think these stereo images are already calibrated? So for now coeffs = all zero)
+    // (I think these stereo images are already calibrated/undistorted?
+    // So for now coeffs = all zero)
 
     cv::Mat coeffs = cv::Mat().zeros(1,5,0);
     cv::Mat newcammat = cv::getOptimalNewCameraMatrix(cammat, coeffs, size, imgsz);
