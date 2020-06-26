@@ -1,4 +1,5 @@
 #include "DepthMap.h"
+#include "boost/range/combine.hpp"
 
 DepthMap::DepthMap(cv::Mat img1, cv::Mat img2) {
     int size = img1.size[0] * img2.size[1];
@@ -9,13 +10,14 @@ DepthMap::DepthMap(cv::Mat img1, cv::Mat img2) {
 }
 
 //ADD A DESTRUCTORRRRRR
+//ADD A PARSERRRRRR
 
 /*   From the paper:
  * "We tried lens distortion models of up to four parameters (radial κ1, κ2;
  * tangential p1, p2), and found that the 2-parameter model without
  * tangential distortion is sufficiently accurate for the lenses we employ."
  */
-cv::Mat DepthMap::generateMap() {
+void DepthMap::generateMap(cv::Mat &newimg1, cv::Mat &newimg2) {
 
     //undistort images (?)
     float data1[9] = {4152.073, 0, 1288.147, 0, 4152.073, 973.571, 0, 0, 1};
@@ -31,13 +33,11 @@ cv::Mat DepthMap::generateMap() {
     CV_Assert( sift != NULL );
     sift->detectAndCompute(img1, cv::Mat(), key1, desc1);
     sift->detectAndCompute(img2, cv::Mat(), key2, desc2);
-//    sift->detect(img1, keypoints, cv::Mat()); //check if we're gonna need descriptors, else use detect instead
 
-    //temp draw keypoints
+    //TEMP draw keypoints
     cv::Mat out;
     cv::drawKeypoints(img2, key2, out, cv::Scalar(233,133,176), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS); //purple
-    //and the other one obviously
-
+    //draw the other one too
 
     //matching descriptor vectors (FLANN)
     cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
@@ -46,16 +46,68 @@ cv::Mat DepthMap::generateMap() {
 
     //Lowe's test
     std::vector<cv::DMatch> good_matches;
+    std::vector<cv::Point2f> pts1, pts2; //train & query index vectors ------ 1947 points
     for (size_t i = 0; i < knn_matches.size(); i++) {
         if (knn_matches[i][0].distance < LOWE_THRESHOLD * knn_matches[i][1].distance) {
             good_matches.push_back(knn_matches[i][0]);
+            pts1.push_back(key1[knn_matches[i][0].queryIdx].pt);
+            pts2.push_back(key2[knn_matches[i][0].trainIdx].pt);
         }
     }
-    cv::Mat img_matches;
-    drawMatches( img1, key1, img2, key2, good_matches, img_matches, cv::Scalar(211,9,45), //blue
-                     cv::Scalar(255,255,255), std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
 
-    return img_matches;
+    //draw
+    cv::Mat img_matches;
+    drawMatches(img1, key1, img2, key2, good_matches, img_matches, cv::Scalar(211,9,45), //blue
+                cv::Scalar(255,255,255), std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+
+    cv::Mat mask,flat;
+    cv::Mat f_mat = cv::findFundamentalMat(pts1, pts2, cv::FM_LMEDS, 3, 0.99f, mask); //????
+
+    //select only inlier points
+    mask = mask.reshape(1,1); //flatten
+//    pts1 = pts1[1]; //?????????
+
+    //find epilines corr. to points in image 2 and to be drawn on 1
+    cv::Mat lines1, lines2; //r = 1947, c = 1
+    cv::computeCorrespondEpilines(pts2, 2, f_mat, lines1);
+    cv::computeCorrespondEpilines(pts1, 1, f_mat, lines2);
+//    lines1 = lines1.reshape(-1,3);
+//    std::cout << mask << std::endl; //1947
+//    std::cout << lines1.cols << std::endl; //1
+
+    cv::Mat new3, new4, new5, new6;
+    drawEpilines(img1, img2, lines1, pts1, pts2, new3, new4);
+    drawEpilines(img2, img1, lines2, pts2, pts1, new5, new6);
+    newimg1 = new3;
+    newimg2 = new5;
+
+}
+
+//draws on img1
+void DepthMap::drawEpilines(cv::Mat img1, cv::Mat img2, cv::Mat lines,
+                            std::vector<cv::Point2f> pts1, std::vector<cv::Point2f> pts2,
+                            cv::Mat &newimg1, cv::Mat &newimg2) {
+
+    //convert to vector
+    std::vector<cv::Point2f> array;
+    if (lines.isContinuous()) {
+       array.assign((cv::Point2f*)lines.data, (cv::Point2f*)lines.data + lines.total()*lines.channels()); //1947x1
+    }
+
+    //zip
+//    for (auto tup : boost::combine(array, pts1, pts2)) {
+    for (int i=0; i<array.size(); i++) {
+//        boost::tuple<cv::Point2f, cv::Point2f, cv::Point2f> asd = tup;
+        cv::Scalar color((std::rand())*255,(std::rand())*255,(std::rand())*255);
+//        std::cout << "asd " << std::endl;
+//        //some weird shit here that make no sense at all
+
+        cv::line(img1, pts1[i], pts2[i], color, 1);
+        cv::circle(img1, pts1[i], 5, color, -1);
+        cv::circle(img2, pts2[i], 5, color, -1);
+    }
+    newimg1 = img1; //r=2008, c=2988
+    newimg2 = img2; //''
 }
 
 

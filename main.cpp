@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     parser.process(a);
 
     const QStringList args = parser.positionalArguments();
-    if(args.size() != 3) {
+    if(args.size() != 4) {
         std::cerr << "Error: Wrong number of arguments" << std::endl;
         a.exit(1);
         return 1;
@@ -27,7 +27,8 @@ int main(int argc, char *argv[])
     //input stereo files & output rendered file paths
     cv::String f1 = args[0].toUtf8().constData();
     cv::String f2 = args[1].toUtf8().constData();
-    cv::String output = args[2].toUtf8().constData();
+    cv::String output1 = args[2].toUtf8().constData();
+    cv::String output2 = args[3].toUtf8().constData();
 
     //load images
     cv::Mat stereo1, stereo2;
@@ -43,18 +44,26 @@ int main(int argc, char *argv[])
     }
 
     DepthMap dm_util(stereo1, stereo2);
-    cv::Mat depth_map = dm_util.generateMap();
+    cv::Mat img1, img2;
+    dm_util.generateMap(img1, img2);
 
-    cv::String windowName = "Depth Map Reprojection";
-    cv::namedWindow(windowName);
+    cv::String dmr_1 = "Depth Map Reprojection 1";
+    cv::namedWindow(dmr_1);
 
-    cv::imshow(windowName, depth_map);
+    cv::String dmr_2 = "Depth Map Reprojection 2";
+    cv::namedWindow(dmr_2);
+
+
+    cv::imshow(dmr_1, img1);
+    cv::imshow(dmr_2, img2);
     int k = cv::waitKey(0);
     if(k == 's') {
-        cv::imwrite(output, depth_map);
+        cv::imwrite(output1, img1);
+        cv::imwrite(output2, img2);
     }
 
-    cv::destroyWindow(windowName);
+    cv::destroyWindow(dmr_1);
+    cv::destroyWindow(dmr_2);
 
 //    MainWindow w;
 //    w.show();

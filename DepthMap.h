@@ -11,11 +11,16 @@ class DepthMap
 public:
 
     DepthMap(cv::Mat img1, cv::Mat img2);
-    cv::Mat generateMap();
+    void generateMap(cv::Mat &newimg1, cv::Mat &newimg2);
 
 private:
 
     cv::Mat undistortImage(cv::Mat img, void *data);
+
+    void drawEpilines(cv::Mat img1, cv::Mat img2, cv::Mat lines,
+                      std::vector<cv::Point2f> pts1, std::vector<cv::Point2f> pts2,
+                      cv::Mat &newimg1, cv::Mat &newimg2);
+
     cv::Mat _stereo1, _stereo2;
 
 };

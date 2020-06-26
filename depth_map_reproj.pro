@@ -12,11 +12,11 @@ TARGET = depth_map_reproj
 TEMPLATE = app
 
 INCLUDEPATH +=  /Users/marky/OpenCV/OpenCV_source/include/opencv2 \
-                /usr/local/include/opencv4
+                /usr/local/Cellar/boost/1.72.0_3 \
+                /usr/local/include/opencv4 \ #pff why
+                /usr/local/include
 
 LIBS += -L"/usr/local/lib" \
-     -L"/Users/marky/OpenCV/OpenCV_build/lib" \
-     -L/usr/local/lib \
      -lopencv_core \
      -lopencv_imgproc \
      -lopencv_features2d\
@@ -24,7 +24,7 @@ LIBS += -L"/usr/local/lib" \
      -lopencv_features2d \
      -lopencv_photo \
      -lopencv_imgcodecs \
-     -lopencv_calib3d #\
+     -lopencv_calib3d
 #     -lopencv_contrib \
 #     -lopencv_legacy
 #     -l
