@@ -6,24 +6,199 @@
 #include "DepthMap.h"
 #include "mainwindow.h"
 #include "PfmLoader.h"
+#include <opencv2/highgui.hpp>
+#include <pthread.h>
 
-#define WINDOW_W 600
-#define WINDOW_H 450
+#define WINDOW_W 800
+#define WINDOW_H 700
+
+std::string _windowname = "Depth Map Reprojection";
+cv::Mat _stereo1, _stereo2,
+        _pfm1, _pfm2,
+        _epi1, _epi2,
+        _reproj3d;
+
+typedef struct ButtonData {
+    int state = 0;
+    pthread_mutex_t mtx;
+    std::string img = "";
+} ButtonData;
+
+void stereoButtonCall1(int state, void *data) {
+
+    //converting user data to the right type
+    ButtonData *ptr = (ButtonData *)data;
+    if (!ptr) {
+        std::cout << "Stereo Button 1 user data is empty" << std::endl;
+        return;
+    }
+
+    pthread_mutex_lock(&ptr->mtx); //what's your value??
+    ptr->state = state;
+
+    if (_stereo1.empty()) {
+        _stereo1 = cv::imread(ptr->img, cv::IMREAD_COLOR);
+        if (_stereo1.empty()) {
+            std::cout << "Could not read stereo 1 image" << std::endl;
+            return;
+        }
+    }
+    cv::imshow(_windowname, _stereo1);
+    pthread_mutex_unlock(&ptr->mtx);
+}
+
+void stereoButtonCall2(int state, void *data) {
+
+    //converting user data to the right type
+    ButtonData *ptr = (ButtonData *)data;
+    if (!ptr) {
+        std::cout << "Stereo Button 1 user data is empty" << std::endl;
+        return;
+    }
+
+    pthread_mutex_lock(&ptr->mtx); //what's your value??
+    ptr->state = state;
+
+    if (_stereo2.empty()) {
+        _stereo2 = cv::imread(ptr->img, cv::IMREAD_COLOR);
+        if (_stereo2.empty()) {
+            std::cout << "Could not read stereo 2 image" << std::endl;
+            return;
+        }
+    }
+    cv::imshow(_windowname, _stereo2);
+    pthread_mutex_unlock(&ptr->mtx);
+}
+
+void epilineButtonCall1(int state, void *data) {
+
+    ButtonData *ptr = (ButtonData *)data;
+    if (!ptr) {
+        std::cout << "Epiline Button 1 user data is empty" << std::endl;
+        return;
+    }
+
+    pthread_mutex_lock(&ptr->mtx); //what's your value??
+    ptr->state = state;
+
+    if (_epi1.empty() && _epi2.empty()) {
+        //convert to grayscale
+        cv::Mat g1, g2;
+        cv::cvtColor(_stereo1, g1, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(_stereo2, g2, cv::COLOR_BGR2GRAY);
+
+        DepthMap depth_map(g1, g2);
+        depth_map.generateMap(_epi1, _epi2);
+    }
+
+    cv::imshow(_windowname, _epi1);
+    pthread_mutex_unlock(&ptr->mtx);
+}
+
+void epilineButtonCall2(int state, void *data) {
+
+    ButtonData *ptr = (ButtonData *)data;
+    if (!ptr) {
+        std::cout << "Epiline Button 2 user data is empty" << std::endl;
+        return;
+    }
+    pthread_mutex_lock(&ptr->mtx); //what's your value??
+    ptr->state = state;
+
+    if (_epi1.empty() && _epi2.empty()) {
+        //convert to grayscale
+        cv::Mat g1, g2;
+        cv::cvtColor(_stereo1, g1, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(_stereo2, g2, cv::COLOR_BGR2GRAY);
+
+        DepthMap depth_map(g1, g2);
+        depth_map.generateMap(_epi1, _epi2);
+    }
+
+    cv::imshow(_windowname, _epi2);
+    pthread_mutex_unlock(&ptr->mtx);
+}
+
+void mapButtonCall1(int state, void *data) {
+
+    ButtonData *ptr = (ButtonData *)data;
+    if (!ptr) {
+        std::cout << "Disparity Map Button 1 user data is empty" << std::endl;
+        return;
+    }
+    pthread_mutex_lock(&ptr->mtx); //what's your value??
+    ptr->state = state;
+
+    if (_pfm1.empty()) {
+
+        cv::Mat temp;
+        PfmLoader loader = PfmLoader();
+        loader.readFilePFM(temp, ptr->img);
+        if (temp.empty()) {
+            std::cout << "Could not read stereo 2 image" << std::endl;
+            return;
+        }
+        //I.convertTo(Iresult, CV_8UC1);
+        _pfm1 = temp / 255.0;
+    }
+    cv::imshow(_windowname, _pfm1);
+    pthread_mutex_unlock(&ptr->mtx);
+}
+
+void mapButtonCall2(int state, void *data) {
+
+    ButtonData *ptr = (ButtonData *)data;
+    if (!ptr) {
+        std::cout << "Disparity Map Button 2 user data is empty" << std::endl;
+        return;
+    }
+    pthread_mutex_lock(&ptr->mtx); //what's your value??
+    ptr->state = state;
+    if (_pfm2.empty()) {
+        cv::Mat temp;
+        PfmLoader loader = PfmLoader();
+        loader.readFilePFM(temp, ptr->img);
+        if (temp.empty()) {
+            std::cout << "Could not read stereo 2 image" << std::endl;
+            return;
+        }
+        //I.convertTo(Iresult, CV_8UC1);
+        _pfm2 = temp / 255.0;
+    }
+
+    cv::imshow(_windowname, _pfm2);
+    pthread_mutex_unlock(&ptr->mtx);
+}
+
+void reprojButtonCall(int state, void *data) {
+
+    ButtonData *ptr = (ButtonData *)data;
+    if (!ptr) {
+        std::cout << "Reprojection Button user data is empty" << std::endl;
+        return;
+    }
+    std::cout << ptr->img << std::endl;
+}
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    MainWindow w;
+
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addPositionalArgument("stereo1", "Input stereo image 1");
     parser.addPositionalArgument("stereo2", "Input stereo image 2");
-    parser.addPositionalArgument("output1", "Output epiline image 1"); //TEMP
-    parser.addPositionalArgument("output2", "Output epiline image 2"); //TEMP
+    parser.addPositionalArgument("pfm1", "Input pfm image 1");
+    parser.addPositionalArgument("pfm2", "Input pfm image 2");
     parser.process(a);
 
     const QStringList args = parser.positionalArguments();
-    if(args.size() != 6) {
+    if(args.size() != 4) {
         std::cerr << "Error: Wrong number of arguments" << std::endl;
         a.exit(1);
         return 1;
@@ -32,108 +207,29 @@ int main(int argc, char *argv[])
     //input stereo files & output rendered file paths
     cv::String f1 = args[0].toUtf8().constData();
     cv::String f2 = args[1].toUtf8().constData();
-    cv::String output1 = args[2].toUtf8().constData();
-    cv::String output2 = args[3].toUtf8().constData();
-    cv::String pfm_in = args[4].toUtf8().constData();
-    cv::String pfm_out = args[5].toUtf8().constData();
+    cv::String pfm1 = args[2].toUtf8().constData();
+    cv::String pfm2 = args[3].toUtf8().constData();
 
-    //load images
-    cv::Mat stereo1, stereo2;
-    stereo1 = cv::imread(f1, cv::IMREAD_COLOR);
-    if(stereo1.empty()) {
-        std::cout << "Could not read the image: " << f1 << std::endl;
-        return 1;
-    }
-    stereo2 = cv::imread(f2, cv::IMREAD_COLOR);
-    if(stereo2.empty()) {
-        std::cout << "Could not read the image: " << f2 << std::endl;
-        return 1;
-    }
+    //set up window and buttons
+    cv::namedWindow(_windowname, cv::WINDOW_NORMAL);
+    cv::resizeWindow(_windowname, WINDOW_W, WINDOW_H);
 
+    ButtonData stereo_data1, stereo_data2, epiline_data1, epiline_data2,
+               map_data1, map_data2, reproj_data;
+    stereo_data1.img = f1;
+    stereo_data2.img = f2;
+    map_data1.img = pfm1;
+    map_data2.img = pfm2;
 
-    // ********** PFM LOADER TEST **********
-    cv::Mat I, M;
-    PfmLoader loader = PfmLoader();
-    loader.readFilePFM(I, pfm_in);
-    loader.writeFilePFM(I, pfm_out);
-    loader.readFilePFM(M, pfm_out);
-    cv::Mat Iresult;
-    //I.convertTo(Iresult, CV_8UC1);
-    Iresult = I / 255.0;
-    cv::Mat Mresult;
-    //M.convertTo(Mresult, CV_8UC1);
-    Mresult = M / 255.0;
-    cv::namedWindow( "pfm_disp_after", cv::WINDOW_NORMAL );
-    cv::resizeWindow("pfm_disp_after", WINDOW_W, WINDOW_H);
-    cv::imshow( "pfm_disp_after", Mresult );
-    cv::namedWindow( "pfm_disp_before", cv::WINDOW_NORMAL );
-    cv::resizeWindow("pfm_disp_before", WINDOW_W, WINDOW_H);
-    cv::imshow( "pfm_disp_before", Iresult );
+    cv::createButton("Stereo Img 1", stereoButtonCall1, &stereo_data1, cv::QT_PUSH_BUTTON, 0);
+    cv::createButton("Stereo Img 2", stereoButtonCall2, &stereo_data2, cv::QT_PUSH_BUTTON, 0);
+    cv::createButton("Draw Epilines Img 1", epilineButtonCall1, &epiline_data1, cv::QT_PUSH_BUTTON, 0);
+    cv::createButton("Draw Epilines Img 2", epilineButtonCall2, &epiline_data2, cv::QT_PUSH_BUTTON, 0);
+    cv::createButton("Disparity Map 1", mapButtonCall1, &map_data1, cv::QT_PUSH_BUTTON, 0);
+    cv::createButton("Disparity Map 2", mapButtonCall2, &map_data2, cv::QT_PUSH_BUTTON, 0);
+    cv::createButton("3D Reprojection", reprojButtonCall, &reproj_data, cv::QT_PUSH_BUTTON, 0);
 
-    cv::waitKey(0);
-    return 0;
-
-    // ********** ********** **********
-
-
-
-
-
-
-
-
-
-
-    //convert to grayscale
-    cv::Mat g1, g2; //, disp, disp8;
-    cv::cvtColor(stereo1, g1, cv::COLOR_BGR2GRAY);
-    cv::cvtColor(stereo2, g2, cv::COLOR_BGR2GRAY);
-
-    cv::Mat newimg1, newimg2;
-    DepthMap depth_map(g1, g2);
-    depth_map.generateMap(newimg1, newimg2);
-
-//    cv::MatSize mat = g1.size;
-//    disp.create(mat[0], mat[1], 0);
-
-//    int n_disp = 192; //must be divisible by 16
-//    cv::Ptr<cv::StereoBM> stereo = cv::StereoBM::create(n_disp, 15);
-
-//    stereo->setDisp12MaxDiff(1);
-//    stereo->setSpeckleRange(8);
-//    stereo->setSpeckleWindowSize(9);
-//    stereo->setUniquenessRatio(0);
-//    stereo->setTextureThreshold(507);
-//    stereo->setMinDisparity(-39);
-//    stereo->setPreFilterCap(61);
-//    stereo->setPreFilterSize(5);
-
-//    stereo->compute(g1, g2, disp);
-//    normalize(disp, disp8, 0, 255, cv::NORM_MINMAX, CV_8U);
-
-    cv::String dmr = "Depth Map 1";
-    cv::namedWindow(dmr, cv::WINDOW_NORMAL);
-    cv::resizeWindow(dmr, WINDOW_W, WINDOW_H);
-    cv::imshow(dmr, newimg1);
-
-    cv::String dmr_2 = "Depth Map 2";
-    cv::namedWindow(dmr_2, cv::WINDOW_NORMAL);
-    cv::resizeWindow(dmr_2, WINDOW_W, WINDOW_H);
-    cv::imshow(dmr_2, newimg2);
-
-    int k = cv::waitKey(0);
-    switch(k){
-    case 's': {
-        cv::imwrite(output1, newimg1);
-        cv::imwrite(output2, newimg2);
-        break;
-    }
-    case 'q': {
-        cv::destroyAllWindows();
-        break;
-    }
-    }
-
-    a.exit();
+    return a.exec();
 }
+
 

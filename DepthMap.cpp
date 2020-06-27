@@ -11,6 +11,7 @@ DepthMap::DepthMap(cv::Mat img1, cv::Mat img2) {
 }
 
 //ADD A DESTRUCTORRRRRR
+
 //ADD A PARSERRRRRR
 
 void DepthMap::generateMap(cv::Mat &newimg1, cv::Mat &newimg2) {
@@ -128,11 +129,6 @@ void DepthMap::drawEpilines(cv::Mat img1, cv::Mat img2, cv::Mat lines,
 }
 
 
-
-//cv::Mat DepthMap::renderDepthMap(cv::Mat, ) {
-
-//}
-
 cv::Mat DepthMap::undistortImage(cv::Mat img, void *data) {
 
     int height = img.size[0];
@@ -159,57 +155,3 @@ cv::Mat DepthMap::undistortImage(cv::Mat img, void *data) {
 
     return undist;
 }
-
-
-
-
-
-//    cv::Mat g1, g2, disp;
-
-//    //convert to grayscale
-//    cv::cvtColor(_stereo1, g1, cv::COLOR_BGR2GRAY);
-//    cv::cvtColor(_stereo2, g2, cv::COLOR_BGR2GRAY);
-
-//    cv::MatSize asd = g1.size;
-
-//    disp.create(asd[0],asd[1],0);
-
-//    int n_disp = 288;
-
-//    cv::Ptr<cv::StereoBM> stereo = cv::StereoBM::create(n_disp, 15);
-//    //    disparity = stereo.compute(imgL,imgR)
-//    //    stereo->setMinDisparity(33);
-
-//    stereo->compute(g1, g2, disp);
-
-
-
-
-
-    //    Mat im_left=stereo1;
-    //    Mat im_right=stereo2;
-    //    cv::Size imagesize = im_left.size();
-    //    cv::Mat disparity_left=cv::Mat(imagesize.height,imagesize.width,CV_16S);
-    //    cv::Mat disparity_right=cv::Mat(imagesize.height,imagesize.width,CV_16S);
-    //    cv::Mat g1,g2,disp,disp8;
-    //    cv::cvtColor(im_left,g1,cv::COLOR_BGR2GRAY);
-    //    cv::cvtColor(im_right,g2,cv::COLOR_BGR2GRAY);
-    //    cv::Ptr<cv::StereoBM> sbm = cv::StereoBM::create(0,21);
-    //    sbm->setDisp12MaxDiff(1);
-    //    sbm->setSpeckleRange(8);
-    //    sbm->setSpeckleWindowSize(9);
-    //    sbm->setUniquenessRatio(0);
-    //    sbm->setTextureThreshold(507);
-    //    sbm->setMinDisparity(-39);
-    //    sbm->setPreFilterCap(61);
-    //    sbm->setPreFilterSize(5);
-    //    sbm->compute(g1,g2,disparity_left);
-    //    normalize(disparity_left, disp8, 0, 255, CV_MINMAX, CV_8U);
-    //    cv::namedWindow("Left",CV_WINDOW_FREERATIO);
-    //    cv::imshow("Left", im_left);
-    //    cv::namedWindow("Right",CV_WINDOW_FREERATIO);
-    //    cv::imshow("Right", im_right);
-    //    cv::namedWindow("Depth map",CV_WINDOW_FREERATIO);
-    //    cv::imshow("Depth map", disp8);
-    //    cv::waitKey(0);
-
