@@ -5,6 +5,7 @@
 
 #include "DepthMap.h"
 #include "mainwindow.h"
+#include "PfmLoader.h"
 
 #define WINDOW_W 600
 #define WINDOW_H 450
@@ -22,7 +23,7 @@ int main(int argc, char *argv[])
     parser.process(a);
 
     const QStringList args = parser.positionalArguments();
-    if(args.size() != 4) {
+    if(args.size() != 6) {
         std::cerr << "Error: Wrong number of arguments" << std::endl;
         a.exit(1);
         return 1;
@@ -33,6 +34,8 @@ int main(int argc, char *argv[])
     cv::String f2 = args[1].toUtf8().constData();
     cv::String output1 = args[2].toUtf8().constData();
     cv::String output2 = args[3].toUtf8().constData();
+    cv::String pfm_in = args[4].toUtf8().constData();
+    cv::String pfm_out = args[5].toUtf8().constData();
 
     //load images
     cv::Mat stereo1, stereo2;
@@ -46,6 +49,31 @@ int main(int argc, char *argv[])
         std::cout << "Could not read the image: " << f2 << std::endl;
         return 1;
     }
+
+
+    // ********** PFM LOADER TEST **********
+    cv::Mat I, M;
+    PfmLoader loader = PfmLoader();
+    loader.ReadFilePFM(I, pfm_in);
+    loader.WriteFilePFM(I, pfm_out);
+    loader.ReadFilePFM(M, pfm_out);
+    cv::Mat Iresult;
+    //I.convertTo(Iresult, CV_8UC1);
+    Iresult = I / 255.0;
+    cv::Mat Mresult;
+    //M.convertTo(Mresult, CV_8UC1);
+    Mresult = M / 255.0;
+    cv::namedWindow( "pfm_disp_after", cv::WINDOW_NORMAL );
+    cv::resizeWindow("pfm_disp_after", WINDOW_W, WINDOW_H);
+    cv::imshow( "pfm_disp_after", Mresult );
+    cv::namedWindow( "pfm_disp_before", cv::WINDOW_NORMAL );
+    cv::resizeWindow("pfm_disp_before", WINDOW_W, WINDOW_H);
+    cv::imshow( "pfm_disp_before", Iresult );
+
+    cv::waitKey(0);
+    return 0;
+
+    // ********** P********** **********
 
     cv::Mat g1, g2; //, disp, disp8;
 

@@ -52,9 +52,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-        DepthMap.cpp
+        DepthMap.cpp \
+    PfmLoader.cpp
 
 HEADERS  += mainwindow.h \
-        DepthMap.h
+        DepthMap.h \
+    PfmLoader.h
 
 FORMS    += mainwindow.ui
