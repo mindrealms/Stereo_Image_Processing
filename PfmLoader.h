@@ -1,6 +1,13 @@
 #ifndef PFMLOADER_H
 #define PFMLOADER_H
 
+#include "opencv2/opencv.hpp"
+#include <iostream>
+#include <stdio.h>
+#include <fstream>
+#include <iomanip>
+#include <cmath>
+
 /*  Name:
  *      ImageIOpfm.h
  *
@@ -12,24 +19,16 @@
  *      pfm files
  */
 
-#include "opencv2/opencv.hpp"
-#include <iostream>
-#include <stdio.h>
-#include <fstream>
-#include <iomanip>
-#include <cmath>
-
-
 class PfmLoader {
 
 public:
     PfmLoader();
 
-    void skip_space(std::fstream& fileStream);
-    int littleendian();
+    void skipSpace(std::fstream& fileStream);
+    int littleEndian();
     void swapBytes(float* fptr);
-    int ReadFilePFM(cv::Mat &im, std::string path);
-    int WriteFilePFM(const cv::Mat &im, std::string path, float scalef=1/255.0);
+    int readFilePFM(cv::Mat &im, std::string path);
+    int writeFilePFM(const cv::Mat &im, std::string path, float scalef=1/255.0);
 
 };
 

@@ -54,9 +54,9 @@ int main(int argc, char *argv[])
     // ********** PFM LOADER TEST **********
     cv::Mat I, M;
     PfmLoader loader = PfmLoader();
-    loader.ReadFilePFM(I, pfm_in);
-    loader.WriteFilePFM(I, pfm_out);
-    loader.ReadFilePFM(M, pfm_out);
+    loader.readFilePFM(I, pfm_in);
+    loader.writeFilePFM(I, pfm_out);
+    loader.readFilePFM(M, pfm_out);
     cv::Mat Iresult;
     //I.convertTo(Iresult, CV_8UC1);
     Iresult = I / 255.0;
@@ -73,11 +73,19 @@ int main(int argc, char *argv[])
     cv::waitKey(0);
     return 0;
 
-    // ********** P********** **********
+    // ********** ********** **********
 
-    cv::Mat g1, g2; //, disp, disp8;
+
+
+
+
+
+
+
+
 
     //convert to grayscale
+    cv::Mat g1, g2; //, disp, disp8;
     cv::cvtColor(stereo1, g1, cv::COLOR_BGR2GRAY);
     cv::cvtColor(stereo2, g2, cv::COLOR_BGR2GRAY);
 
@@ -103,12 +111,12 @@ int main(int argc, char *argv[])
 //    stereo->compute(g1, g2, disp);
 //    normalize(disp, disp8, 0, 255, cv::NORM_MINMAX, CV_8U);
 
-    cv::String dmr = "Depth Map Reprojection";
+    cv::String dmr = "Depth Map 1";
     cv::namedWindow(dmr, cv::WINDOW_NORMAL);
     cv::resizeWindow(dmr, WINDOW_W, WINDOW_H);
     cv::imshow(dmr, newimg1);
 
-    cv::String dmr_2 = "Depth Map Reprojection 2";
+    cv::String dmr_2 = "Depth Map 2";
     cv::namedWindow(dmr_2, cv::WINDOW_NORMAL);
     cv::resizeWindow(dmr_2, WINDOW_W, WINDOW_H);
     cv::imshow(dmr_2, newimg2);
