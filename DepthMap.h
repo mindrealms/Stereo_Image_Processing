@@ -22,6 +22,7 @@ private:
                       cv::Mat &newimg1, cv::Mat &newimg2);
 
     cv::Mat _stereo1, _stereo2;
+    int _width;
 
 };
 
