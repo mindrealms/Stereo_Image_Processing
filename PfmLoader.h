@@ -8,7 +8,12 @@
 #include <iomanip>
 #include <cmath>
 
-/*  Name:
+/*
+ * Source: https://github.com/dscharstein/pfmLib
+ *
+ *
+ *
+ * Name:
  *      ImageIOpfm.h
  *
  *  Description:

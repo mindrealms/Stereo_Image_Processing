@@ -89,19 +89,14 @@ void DepthMap::generateMap(cv::Mat &newimg1, cv::Mat &newimg2) {
     cv::Mat new3, new4, new5, new6;
 
     cv::computeCorrespondEpilines(pts2, 2, f_mat, lines1);
-    drawEpilines(img1, img2, lines1, pts1, pts2, new3, new4);
+    drawEpilines(img1, lines1, pts1, newimg1);
 
     cv::computeCorrespondEpilines(pts1, 1, f_mat, lines2);
-    drawEpilines(img2, img1, lines2, pts2, pts1, new5, new6);
-    newimg1 = new3;
-    newimg2 = new5;
-
+    drawEpilines(img2, lines2, pts2, newimg2);
 }
 
 //draws on img1
-void DepthMap::drawEpilines(cv::Mat img1, cv::Mat img2, cv::Mat lines,
-                            std::vector<cv::Point2f> pts1, std::vector<cv::Point2f> pts2,
-                            cv::Mat &newimg1, cv::Mat &newimg2) {
+void DepthMap::drawEpilines(cv::Mat img, cv::Mat lines, std::vector<cv::Point2f> pts, cv::Mat &newimg) {
 
     //convert to vector
     std::vector<cv::Point3f> array;
@@ -110,9 +105,8 @@ void DepthMap::drawEpilines(cv::Mat img1, cv::Mat img2, cv::Mat lines,
     }
 
     //zip
-    cv::Mat g1, g2;
-    cv::cvtColor(img1, g1, cv::COLOR_GRAY2BGR);
-    cv::cvtColor(img2, g2, cv::COLOR_GRAY2BGR);
+    cv::Mat temp;
+    cv::cvtColor(img, temp, cv::COLOR_GRAY2BGR);
 
     for (int i=0; i<lines.rows; i++) {
         cv::Scalar color((std::rand())*255,(std::rand())*255,(std::rand())*255);
@@ -120,12 +114,10 @@ void DepthMap::drawEpilines(cv::Mat img1, cv::Mat img2, cv::Mat lines,
         cv::Point point2(_width, -(lines.at<cv::Point3f>(i).z + lines.at<cv::Point3f>(i).x*_width)
                          / lines.at<cv::Point3f>(i).y);
 
-        cv::line(g1, point1, point2, color, 1);
-        cv::circle(g1, pts1[i], 5, color, -1);
-        cv::circle(g2, pts2[i], 5, color, -1);
+        cv::line(temp, point1, point2, color, 1);
+        cv::circle(temp, pts[i], 5, color, -1);
     }
-    newimg1 = g1;
-    newimg2 = g2;
+    newimg = temp;
 }
 
 
