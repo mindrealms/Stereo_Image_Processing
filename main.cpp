@@ -21,8 +21,10 @@ cv::Mat _stereo1, _stereo2,
 typedef struct ButtonData {
     int state = 0;
     pthread_mutex_t mtx;
-    std::string img = "";
 } ButtonData;
+
+
+/** CHECK ALL THIS MUTEX RELATED STUFF PLEASE. */
 
 void stereoButtonCall1(int state, void *data) {
 
@@ -32,16 +34,11 @@ void stereoButtonCall1(int state, void *data) {
         std::cout << "Stereo Button 1 user data is empty" << std::endl;
         return;
     }
-
     pthread_mutex_lock(&ptr->mtx); //what's your value??
+    std::cout << ptr->state << std::endl;
     ptr->state = state;
-
     if (_stereo1.empty()) {
-        _stereo1 = cv::imread(ptr->img, cv::IMREAD_COLOR);
-        if (_stereo1.empty()) {
-            std::cout << "Could not read stereo 1 image" << std::endl;
-            return;
-        }
+        std::cout << "Could not read stereo 1 image" << std::endl; return;
     }
     cv::imshow(_windowname, _stereo1);
     pthread_mutex_unlock(&ptr->mtx);
@@ -55,16 +52,10 @@ void stereoButtonCall2(int state, void *data) {
         std::cout << "Stereo Button 1 user data is empty" << std::endl;
         return;
     }
-
     pthread_mutex_lock(&ptr->mtx); //what's your value??
     ptr->state = state;
-
     if (_stereo2.empty()) {
-        _stereo2 = cv::imread(ptr->img, cv::IMREAD_COLOR);
-        if (_stereo2.empty()) {
-            std::cout << "Could not read stereo 2 image" << std::endl;
-            return;
-        }
+        std::cout << "Could not read stereo 2 image" << std::endl; return;
     }
     cv::imshow(_windowname, _stereo2);
     pthread_mutex_unlock(&ptr->mtx);
@@ -77,20 +68,11 @@ void epilineButtonCall1(int state, void *data) {
         std::cout << "Epiline Button 1 user data is empty" << std::endl;
         return;
     }
-
     pthread_mutex_lock(&ptr->mtx); //what's your value??
     ptr->state = state;
-
-    if (_epi1.empty() && _epi2.empty()) {
-        //convert to grayscale
-        cv::Mat g1, g2;
-        cv::cvtColor(_stereo1, g1, cv::COLOR_BGR2GRAY);
-        cv::cvtColor(_stereo2, g2, cv::COLOR_BGR2GRAY);
-
-        DepthMap depth_map(g1, g2);
-        depth_map.generateMap(_epi1, _epi2);
+    if (_epi1.empty()) {
+        std::cout << "Computation of epilines failed" << std::endl; return;
     }
-
     cv::imshow(_windowname, _epi1);
     pthread_mutex_unlock(&ptr->mtx);
 }
@@ -104,17 +86,9 @@ void epilineButtonCall2(int state, void *data) {
     }
     pthread_mutex_lock(&ptr->mtx); //what's your value??
     ptr->state = state;
-
-    if (_epi1.empty() && _epi2.empty()) {
-        //convert to grayscale
-        cv::Mat g1, g2;
-        cv::cvtColor(_stereo1, g1, cv::COLOR_BGR2GRAY);
-        cv::cvtColor(_stereo2, g2, cv::COLOR_BGR2GRAY);
-
-        DepthMap depth_map(g1, g2);
-        depth_map.generateMap(_epi1, _epi2);
+    if (_epi2.empty()) {
+        std::cout << "Computation of epilines failed" << std::endl; return;
     }
-
     cv::imshow(_windowname, _epi2);
     pthread_mutex_unlock(&ptr->mtx);
 }
@@ -128,18 +102,8 @@ void mapButtonCall1(int state, void *data) {
     }
     pthread_mutex_lock(&ptr->mtx); //what's your value??
     ptr->state = state;
-
     if (_pfm1.empty()) {
-
-        cv::Mat temp;
-        PfmLoader loader = PfmLoader();
-        loader.readFilePFM(temp, ptr->img);
-        if (temp.empty()) {
-            std::cout << "Could not read stereo 2 image" << std::endl;
-            return;
-        }
-        //I.convertTo(Iresult, CV_8UC1);
-        _pfm1 = temp / 255.0;
+        std::cout << "Could not read pfm 1 image" << std::endl; return;
     }
     cv::imshow(_windowname, _pfm1);
     pthread_mutex_unlock(&ptr->mtx);
@@ -155,17 +119,8 @@ void mapButtonCall2(int state, void *data) {
     pthread_mutex_lock(&ptr->mtx); //what's your value??
     ptr->state = state;
     if (_pfm2.empty()) {
-        cv::Mat temp;
-        PfmLoader loader = PfmLoader();
-        loader.readFilePFM(temp, ptr->img);
-        if (temp.empty()) {
-            std::cout << "Could not read stereo 2 image" << std::endl;
-            return;
-        }
-        //I.convertTo(Iresult, CV_8UC1);
-        _pfm2 = temp / 255.0;
+        std::cout << "Could not read pfm 2 image" << std::endl; return;
     }
-
     cv::imshow(_windowname, _pfm2);
     pthread_mutex_unlock(&ptr->mtx);
 }
@@ -177,7 +132,6 @@ void reprojButtonCall(int state, void *data) {
         std::cout << "Reprojection Button user data is empty" << std::endl;
         return;
     }
-    std::cout << ptr->img << std::endl;
 }
 
 
@@ -210,16 +164,31 @@ int main(int argc, char *argv[])
     cv::String pfm1 = args[2].toUtf8().constData();
     cv::String pfm2 = args[3].toUtf8().constData();
 
+    //load stereo imges
+    _stereo1 = cv::imread(f1, cv::IMREAD_COLOR);
+    _stereo2 = cv::imread(f2, cv::IMREAD_COLOR);
+
+    //(compute and) load epiline imges
+    cv::Mat g1, g2;
+    cv::cvtColor(_stereo1, g1, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(_stereo2, g2, cv::COLOR_BGR2GRAY);
+    DepthMap depth_map(g1, g2);
+    depth_map.generateMap(_epi1, _epi2);
+
+    //load pfm disparity maps
+    cv::Mat temp1, temp2;
+    PfmLoader loader = PfmLoader();
+    loader.readFilePFM(temp1, pfm1);
+    _pfm1 = temp1 / 255.0;
+    loader.readFilePFM(temp2, pfm2);
+    _pfm2 = temp2 / 255.0;
+
     //set up window and buttons
     cv::namedWindow(_windowname, cv::WINDOW_NORMAL);
     cv::resizeWindow(_windowname, WINDOW_W, WINDOW_H);
 
     ButtonData stereo_data1, stereo_data2, epiline_data1, epiline_data2,
                map_data1, map_data2, reproj_data;
-    stereo_data1.img = f1;
-    stereo_data2.img = f2;
-    map_data1.img = pfm1;
-    map_data2.img = pfm2;
 
     cv::createButton("Stereo Img 1", stereoButtonCall1, &stereo_data1, cv::QT_PUSH_BUTTON, 0);
     cv::createButton("Stereo Img 2", stereoButtonCall2, &stereo_data2, cv::QT_PUSH_BUTTON, 0);
