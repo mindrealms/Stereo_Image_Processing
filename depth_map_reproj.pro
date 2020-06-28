@@ -61,5 +61,3 @@ HEADERS  += \
     StereoUtils.h \
     Reprojection.h \
     CalibParser.h
-
-FORMS    += mainwindow.ui
