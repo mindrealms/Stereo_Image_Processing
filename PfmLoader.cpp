@@ -83,12 +83,14 @@ int PfmLoader::readFilePFM(cv::Mat &im, std::string path) {
     int littleEndianMachine = littleEndian();
     int needSwap = (littleEndianFile != littleEndianMachine);
 
+    /*
     std::cout << std::setfill('=') << std::setw(19) << "=" << std::endl;
     std::cout << "Reading image to pfm file: " << path << std::endl;
     std::cout << "Little Endian?: "  << ((needSwap) ? "false" : "true")   << std::endl;
     std::cout << "width: "           << width                             << std::endl;
     std::cout << "height: "          << height                            << std::endl;
     std::cout << "scale: "           << scalef                            << std::endl;
+    */
 
     // skip SINGLE newline character after reading third arg
     char c = file.get();
@@ -105,8 +107,10 @@ int PfmLoader::readFilePFM(cv::Mat &im, std::string path) {
     }
 
     if (bands == "Pf") {          // handle 1-band image
+        /*
         std::cout << "Reading grayscale image (1-band)" << std::endl;
         std::cout << "Reading into CV_32FC1 image" << std::endl;
+        */
         im = cv::Mat::zeros(height, width, CV_32FC1);
         for (int i=height-1; i >= 0; --i) {
             for(int j=0; j < width; ++j){
@@ -118,8 +122,10 @@ int PfmLoader::readFilePFM(cv::Mat &im, std::string path) {
             }
         }
     } else if (bands == "PF") {    // handle 3-band image
+        /*
         std::cout << "Reading color image (3-band)" << std::endl;
         std::cout << "Reading into CV_32FC3 image" << std::endl;
+        */
         im = cv::Mat::zeros(height, width, CV_32FC3);
         for (int i=height-1; i >= 0; --i) {
             for (int j=0; j < width; ++j) {
@@ -136,87 +142,7 @@ int PfmLoader::readFilePFM(cv::Mat &im, std::string path) {
         std::cout << "unknown bands description";
         return -1;
     }
-    std::cout << std::setfill('=') << std::setw(19) << "=" << std::endl << std::endl;
+    /* std::cout << std::setfill('=') << std::setw(19) << "=" << std::endl << std::endl; */
     return 0;
 }
 
-/*
- *  Writes a .pfm file image file from an
- *  opencv Mat structure with type
- *  CV_32F, handles either 1 band or 3 band
- *  images
- *
- *  Params:
- *      im:     type: Mat       description: image destination
- *      path:   type: string    description: file path to pfm file
- *      scalef: type: float     description: scale factor and endianness
- */
-int PfmLoader::writeFilePFM(const cv::Mat &im, std::string path, float scalef){
-
-    // create fstream object to write out pfm file
-    // open the file in binary
-    std::fstream file(path.c_str(), std::ios::out | std::ios::binary);
-
-    // init variables
-    int type = im.type();
-    std::string bands;
-    int width = im.size().width, height = im.size().height;     // width and height of the image
-    float fvalue;       // scale factor and temp value to hold pixel value
-    cv::Vec3f vfvalue;      // temp value to hold 3-band pixel value
-
-    switch(type) {       // determine identifier string based on image type
-        case CV_32FC1:
-            bands = "Pf";   // grayscale
-            break;
-        case CV_32FC3:
-            bands = "PF";   // color
-            break;
-        default:
-            std::cout << "Unsupported image type, must be CV_32FC1 or CV_32FC3";
-            return -1;
-    }
-
-    // sign of scalefact indicates endianness, see pfms specs
-    if (littleEndian()) {
-        scalef = -scalef;
-    }
-
-    // insert header information
-    file << bands   << "\n";
-    file << width   << "\n";
-    file << height  << "\n";
-    file << scalef  << "\n";
-
-    std::cout << std::setfill('=') << std::setw(19) << "=" << std::endl;
-    std::cout << "Writing image to pfm file: " << path << std::endl;
-    std::cout << "Little Endian?: "  << ((littleEndian()) ? "true" : "false")   	<< std::endl;
-    std::cout << "width: "           << width                             		<< std::endl;
-    std::cout << "height: "          << height                            		<< std::endl;
-    std::cout << "scale: "           << scalef                            		<< std::endl;
-
-    if (bands == "Pf") {          // handle 1-band image
-        std::cout << "Writing grayscale image (1-band)" << std::endl;
-        std::cout << "Writing into CV_32FC1 image" << std::endl;
-        for (int i=height-1; i >= 0; --i) {
-            for(int j=0; j < width; ++j){
-                fvalue = im.at<float>(i,j);
-                file.write((char*) &fvalue, sizeof(fvalue));
-
-            }
-        }
-    } else if (bands == "PF") {    // handle 3-band image
-        std::cout << "writing color image (3-band)" << std::endl;
-        std::cout << "writing into CV_32FC3 image" << std::endl;
-        for (int i=height-1; i >= 0; --i) {
-            for(int j=0; j < width; ++j){
-                vfvalue = im.at<cv::Vec3f>(i,j);
-                file.write((char*) &vfvalue, sizeof(vfvalue));
-            }
-        }
-    } else {
-        std::cout << "unknown bands description";
-        return -1;
-    }
-    std::cout << std::setfill('=') << std::setw(19) << "=" << std::endl << std::endl;
-    return 0;
-}

@@ -33,7 +33,6 @@ public:
     int littleEndian();
     void swapBytes(float* fptr);
     int readFilePFM(cv::Mat &im, std::string path);
-    int writeFilePFM(const cv::Mat &im, std::string path, float scalef=1/255.0);
 
 };
 

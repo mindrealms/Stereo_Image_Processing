@@ -1,33 +1,27 @@
-#include "DepthMap.h"
-//#include "boost/range/combine.hpp"
+#include "StereoUtils.h"
 
-DepthMap::DepthMap(cv::Mat img1, cv::Mat img2) {
-    int size = img1.size[0] * img2.size[1];
-    _stereo1.reserve(size);
-    _stereo2.reserve(size);
-    _stereo1 = img1;
-    _stereo2 = img2;
-    _width = img1.cols;
+StereoUtils::StereoUtils(cv::Mat img1, cv::Mat img2) :
+    _stereo1(img1), _stereo2(img2), _width(img1.cols) {}
+
+StereoUtils::~StereoUtils(){
+    _stereo1.release();
+    _stereo2.release();
+    _width = 0;
 }
 
-//ADD A DESTRUCTORRRRRR
+void StereoUtils::renderEpilines(cv::Mat data1, cv::Mat data2, cv::Mat &newimg1, cv::Mat &newimg2) {
 
-//ADD A PARSERRRRRR
-
-void DepthMap::generateMap(cv::Mat &newimg1, cv::Mat &newimg2) {
-
-    //Undistort images (???)
-
+    // ******************** START TEMP ***********************
     /*   From the paper:
      * "We tried lens distortion models of up to four parameters (radial κ1, κ2;
      * tangential p1, p2), and found that the 2-parameter model without
-     * tangential distortion is sufficiently accurate for the lenses we employ." --> ???
+     * tangential distortion is sufficiently accurate for the lenses we employ."
+     *
+     * Do I need to undistort? And if so what are the coeffs?
      */
-
-    float data1[9] = {3962.004, 0, 1146.717, 0, 3962.004, 975.476, 0, 0, 1};
-    cv::Mat img1 = undistortImage(_stereo1, data1);
-    float data2[9] = {3962.004, 0, 1254.628, 0, 3962.004, 975.476, 0, 0, 1};
-    cv::Mat img2 = undistortImage(_stereo2, data2);
+    _stereo1 = undistortImage(_stereo1, data1);
+    _stereo2 = undistortImage(_stereo2, data2);
+    // ********************* END TEMP **********************
 
     //find keypoints and descriptors (SIFT)
     std::vector<cv::KeyPoint> key1, key2;
@@ -35,8 +29,8 @@ void DepthMap::generateMap(cv::Mat &newimg1, cv::Mat &newimg2) {
 
     cv::Ptr<cv::SIFT> sift = cv::SIFT::create();
     CV_Assert(sift != NULL);
-    sift->detectAndCompute(img1, cv::Mat(), key1, desc1);
-    sift->detectAndCompute(img2, cv::Mat(), key2, desc2);
+    sift->detectAndCompute(_stereo1, cv::Mat(), key1, desc1);
+    sift->detectAndCompute(_stereo2, cv::Mat(), key2, desc2);
 
     /* Draw keypoints:
      *
@@ -87,16 +81,18 @@ void DepthMap::generateMap(cv::Mat &newimg1, cv::Mat &newimg2) {
     //find epilines corr. to points in image 2 and to be drawn on image 1
     cv::Mat3f lines1, lines2;
     cv::Mat new3, new4, new5, new6;
+    std::vector<cv::Scalar> colors(lines1.rows);
 
     cv::computeCorrespondEpilines(pts2, 2, f_mat, lines1);
-    drawEpilines(img1, lines1, pts1, newimg1);
+    draw(_stereo1, lines1, pts1, newimg1, colors);
 
     cv::computeCorrespondEpilines(pts1, 1, f_mat, lines2);
-    drawEpilines(img2, lines2, pts2, newimg2);
+    draw(_stereo2, lines2, pts2, newimg2, colors);
 }
 
 //draws on img1
-void DepthMap::drawEpilines(cv::Mat img, cv::Mat lines, std::vector<cv::Point2f> pts, cv::Mat &newimg) {
+void StereoUtils::draw(cv::Mat img, cv::Mat lines, std::vector<cv::Point2f> pts, cv::Mat &newimg,
+                       std::vector<cv::Scalar> &colors) {
 
     //convert to vector
     std::vector<cv::Point3f> array;
@@ -107,9 +103,16 @@ void DepthMap::drawEpilines(cv::Mat img, cv::Mat lines, std::vector<cv::Point2f>
     //zip
     cv::Mat temp;
     cv::cvtColor(img, temp, cv::COLOR_GRAY2BGR);
+    cv::Scalar color;
 
     for (int i=0; i<lines.rows; i++) {
-        cv::Scalar color((std::rand())*255,(std::rand())*255,(std::rand())*255);
+        if (static_cast<int>(colors.size()) != lines.rows) {
+            color = cv::Scalar((std::rand())*255,(std::rand())*255,(std::rand())*255);
+            colors.push_back(color);
+        } else {
+            color = colors.at(i);
+        }
+
         cv::Point point1(0, -lines.at<cv::Point3f>(i).z/lines.at<cv::Point3f>(i).y);
         cv::Point point2(_width, -(lines.at<cv::Point3f>(i).z + lines.at<cv::Point3f>(i).x*_width)
                          / lines.at<cv::Point3f>(i).y);
@@ -121,7 +124,17 @@ void DepthMap::drawEpilines(cv::Mat img, cv::Mat lines, std::vector<cv::Point2f>
 }
 
 
-cv::Mat DepthMap::undistortImage(cv::Mat img, void *data) {
+cv::Mat StereoUtils::undistortImage(cv::Mat img, cv::Mat data) {
+
+    /*
+     * I've stored the data.cammatX as cv::Mat's for the purposes of the reprojection
+     * calculations which benefit more from this type. Apologies for the whole
+     * cv::Mat --> float * here.
+     */
+
+    float flat_data[CAMMAT_SZ] = {data.at<float>(0,0), data.at<float>(0,1), data.at<float>(0,2),
+                             data.at<float>(1,0), data.at<float>(1,1), data.at<float>(1,2),
+                             data.at<float>(2,0), data.at<float>(2,1), data.at<float>(2,2)};
 
     int height = img.size[0];
     int width = img.size[1];
@@ -130,20 +143,13 @@ cv::Mat DepthMap::undistortImage(cv::Mat img, void *data) {
 
     cv::Mat undist;
     undist.reserve(imgsz);
-    cv::Mat cammat(3, 3, CV_32F, data); //camera matrix
+    cv::Mat cammat(3, 3, CV_32F, flat_data); //camera matrix
 
-
-    // ******************** TEMP ***********************
-
-    // I'm not sure where to find distortion coefficients, if there are any
-    // (I think these stereo images are already calibrated/undistorted?
-    // So for now coeffs = all zero)
-
+    //for now, all coeffs = zero
     cv::Mat coeffs = cv::Mat().zeros(1,5,0);
     cv::Mat newcammat = cv::getOptimalNewCameraMatrix(cammat, coeffs, size, imgsz);
     cv::undistort(img, undist, cammat, coeffs, newcammat);
 
-    // ********************* TEMP **********************
-
+    //also here once again, if you do end up undistorting, check for potential ownership issues
     return undist;
 }

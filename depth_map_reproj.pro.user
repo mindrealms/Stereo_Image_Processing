@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.2.0, 2020-06-27T23:45:30. -->
+<!-- Written by QtCreator 4.2.0, 2020-06-28T17:21:48. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -314,7 +314,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/depth_map_reproj.pro</value>
     <value type="bool" key="QmakeProjectManager.QmakeRunConfiguration.UseLibrarySearchPath">true</value>
-    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">/Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/im0.png /Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/im1.png /Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/disp0.pfm /Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/disp1.pfm</value>
+    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">/Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/im0.png /Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/im1.png /Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/disp0.pfm /Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/disp1.pfm /Users/marky/Desktop/BVC/dmr_project/depth_map_reproj/dataset/Classroom1-perfect/calib.txt</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.ProFile">depth_map_reproj.pro</value>
     <value type="bool" key="Qt4ProjectManager.Qt4RunConfiguration.UseDyldImageSuffix">false</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.UserWorkingDirectory">/Users/marky/Desktop/BVC/dmr_project/build-depth_map_reproj-marky_macbook_kit-Release</value>

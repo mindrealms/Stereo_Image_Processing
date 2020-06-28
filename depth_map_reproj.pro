@@ -14,7 +14,8 @@ TEMPLATE = app
 INCLUDEPATH +=  /Users/marky/OpenCV/OpenCV_source/include/opencv2 \
                 /usr/local/Cellar/boost/1.72.0_3 \
                 /usr/local/include/opencv4 \ #pff why
-                /usr/local/include
+                /usr/local/include \
+                /Users/marky/Open3D/cpp
 
 LIBS += -L"/usr/local/lib" \
      -lopencv_core \
@@ -51,12 +52,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-        DepthMap.cpp \
-    PfmLoader.cpp
+    PfmLoader.cpp \
+    StereoUtils.cpp \
+    Reprojection.cpp
 
-HEADERS  += mainwindow.h \
-        DepthMap.h \
-    PfmLoader.h
+HEADERS  += \
+    PfmLoader.h \
+    StereoUtils.h \
+    Reprojection.h \
+    CalibParser.h
 
 FORMS    += mainwindow.ui
