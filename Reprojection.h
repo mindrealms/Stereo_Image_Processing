@@ -2,10 +2,15 @@
 #define REPROJECTION_H
 
 
-class Reprojection
-{
+#include <open3d/visualization/visualizer/Visualizer.h>
+
+
+class Reprojection {
+
 public:
+
     Reprojection();
+
 };
 
 #endif // REPROJECTION_H

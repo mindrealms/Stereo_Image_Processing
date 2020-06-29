@@ -12,10 +12,12 @@ TARGET = depth_map_reproj
 TEMPLATE = app
 
 INCLUDEPATH +=  /Users/marky/OpenCV/OpenCV_source/include/opencv2 \
-                /usr/local/Cellar/boost/1.72.0_3 \
-                /usr/local/include/opencv4 \ #pff why
-                /usr/local/include \
-                /Users/marky/Open3D/cpp
+                /usr/local/include/opencv4 \
+                /Users/marky/Open3D/cpp \
+                /Users/marky/Eigen/eigen-3.3.7 \
+                /Users/marky/Open3D/3rdparty/glew/include \
+                /Users/marky/Open3D/3rdparty/GLFW/include \
+                /Users/marky/Open3D/3rdparty/fmt/include
 
 LIBS += -L"/usr/local/lib" \
      -lopencv_core \
@@ -25,19 +27,19 @@ LIBS += -L"/usr/local/lib" \
      -lopencv_features2d \
      -lopencv_photo \
      -lopencv_imgcodecs \
-     -lopencv_calib3d
+     -lopencv_calib3d \
+     -L"/Users/marky/Open3D/build/lib"
 #     -lopencv_contrib \
-#     -lopencv_legacy
-#     -l
-#        -lopencv_world
+#     -lopencv_legacy \
+#     -l \
+#     -lopencv_world
 
 #LIBS += `pkg-config --libs opencv`
 
 QT_CONFIG -= no-pkg-config
 CONFIG+=link_pkgconfig \
            c++11
-#PKGCONFIG+=opencv #I CAN'T LINK THIS IDK WHAT'S WRONG WITH MY PKG-CONFIG / OPENCV.PC FILE :(
-
+#PKGCONFIG+=opencv #having a hard time linking cv and eigen through pkg-config & .pc files for some reason :(
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -54,10 +56,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp\
     PfmLoader.cpp \
     StereoUtils.cpp \
-    Reprojection.cpp
+    Reprojection.cpp \
+    CalibLoader.cpp
 
 HEADERS  += \
     PfmLoader.h \
     StereoUtils.h \
     Reprojection.h \
-    CalibParser.h
+    CalibLoader.h

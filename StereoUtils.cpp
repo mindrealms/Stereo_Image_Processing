@@ -9,7 +9,8 @@ StereoUtils::~StereoUtils(){
     _width = 0;
 }
 
-void StereoUtils::renderEpilines(cv::Mat data1, cv::Mat data2, cv::Mat &newimg1, cv::Mat &newimg2) {
+void StereoUtils::renderEpilines(cv::Mat data1, cv::Mat data2, cv::Mat &newimg1, cv::Mat &newimg2,
+                                 cv::Mat &keymage1, cv::Mat &keymage2, cv::Mat &matchimage) {
 
     // ******************** START TEMP ***********************
     /*   From the paper:
@@ -32,12 +33,9 @@ void StereoUtils::renderEpilines(cv::Mat data1, cv::Mat data2, cv::Mat &newimg1,
     sift->detectAndCompute(_stereo1, cv::Mat(), key1, desc1);
     sift->detectAndCompute(_stereo2, cv::Mat(), key2, desc2);
 
-    /* Draw keypoints:
-     *
-     * cv::Mat out;
-     * cv::drawKeypoints(img1, key1, out, cv::Scalar(233,133,176), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-     * cv::drawKeypoints(img2, key2, out, cv::Scalar(233,133,176), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-     */
+    //Draw keypoints
+    cv::drawKeypoints(_stereo1, key1, keymage1, cv::Scalar(233,133,176), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    cv::drawKeypoints(_stereo2, key2, keymage2, cv::Scalar(233,133,176), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 
     //matching descriptor vectors (FLANN)
     cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
@@ -55,12 +53,9 @@ void StereoUtils::renderEpilines(cv::Mat data1, cv::Mat data2, cv::Mat &newimg1,
         }
     }
 
-    /* Draw keypoint matches between images:
-     *
-     * cv::Mat img_matches;
-     * drawMatches(img1, key1, img2, key2, good_matches, img_matches, cv::Scalar(211,9,45),
+    //Draw keypoint matches between images
+    drawMatches(_stereo1, key1, _stereo2, key2, good_matches, matchimage, cv::Scalar(211,9,45),
                 cv::Scalar(255,141,24), std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-     */
 
     cv::Mat mask;
     cv::Mat f_mat = cv::findFundamentalMat(pts1, pts2, cv::FM_LMEDS, 3, 0.99f, mask);
@@ -89,6 +84,12 @@ void StereoUtils::renderEpilines(cv::Mat data1, cv::Mat data2, cv::Mat &newimg1,
     cv::computeCorrespondEpilines(pts1, 1, f_mat, lines2);
     draw(_stereo2, lines2, pts2, newimg2, colors);
 }
+
+
+//void StereoUtils::generateDepthMap(cv::Mat pfm, CalibParser::CalibData data) {
+
+//}
+
 
 //draws on img1
 void StereoUtils::draw(cv::Mat img, cv::Mat lines, std::vector<cv::Point2f> pts, cv::Mat &newimg,
@@ -132,7 +133,7 @@ cv::Mat StereoUtils::undistortImage(cv::Mat img, cv::Mat data) {
      * cv::Mat --> float * here.
      */
 
-    float flat_data[CAMMAT_SZ] = {data.at<float>(0,0), data.at<float>(0,1), data.at<float>(0,2),
+    float flat_data[9] = {data.at<float>(0,0), data.at<float>(0,1), data.at<float>(0,2),
                              data.at<float>(1,0), data.at<float>(1,1), data.at<float>(1,2),
                              data.at<float>(2,0), data.at<float>(2,1), data.at<float>(2,2)};
 

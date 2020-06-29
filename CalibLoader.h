@@ -1,5 +1,5 @@
-#ifndef CALIBPARSER_H
-#define CALIBPARSER_H
+#ifndef CALIBLOADER_H
+#define CALIBLOADER_H
 
 #include <opencv.hpp>
 #include <cstring>
@@ -12,7 +12,7 @@
  *
  */
 
-namespace CalibParser {
+namespace CalibLoader {
 
 struct CalibData {
     cv::Mat cammat1;    //camera matrices for the rectified views, in the form [f 0 cx; 0 f cy; 0 0 1]
@@ -93,4 +93,4 @@ void parseFile(cv::String file, CalibData &data) {
 
 }
 
-#endif // CALIBPARSER_H
+#endif // CALIBLOADER_H
