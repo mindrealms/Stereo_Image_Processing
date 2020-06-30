@@ -46,15 +46,14 @@ void reprojButtonCall(int state, void *data) {
     }
 
     /** pop up an Open3D window */
-    Reprojection reproj = Reprojection();
+//    Reprojection reproj = Reprojection();
 }
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
     QCommandLineParser parser;
     parser.addHelpOption();
@@ -81,8 +80,9 @@ int main(int argc, char *argv[])
 
     //load calib.txt data
     cv::Mat g1, g2;
-    CalibLoader::CalibData data;
-    CalibLoader::parseFile(calib, data);
+    CalibData data;
+    CalibLoader cloader;
+    cloader.parseFile(calib, data);
 
     //load stereo imges
     _stereo1 = cv::imread(f1, cv::IMREAD_COLOR);

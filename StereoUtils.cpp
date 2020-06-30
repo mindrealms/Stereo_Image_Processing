@@ -1,5 +1,5 @@
 #include "StereoUtils.h"
-
+#include "CalibLoader.h"
 StereoUtils::StereoUtils(cv::Mat img1, cv::Mat img2) :
     _stereo1(img1), _stereo2(img2), _width(img1.cols) {}
 
