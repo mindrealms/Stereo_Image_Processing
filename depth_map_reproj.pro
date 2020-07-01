@@ -56,11 +56,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp\
     PfmLoader.cpp \
     StereoUtils.cpp \
-    Reprojection.cpp \
     CalibLoader.cpp
 
 HEADERS  += \
     PfmLoader.h \
     StereoUtils.h \
-    Reprojection.h \
     CalibLoader.h

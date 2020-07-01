@@ -4,6 +4,8 @@
 #include <iostream>
 #include <opencv2/highgui.hpp>
 #include <pthread.h>
+#include <QStringList>
+#include <QProcess>
 
 #include "StereoUtils.h"
 #include "PfmLoader.h"
@@ -45,8 +47,15 @@ void reprojButtonCall(int state, void *data) {
         return;
     }
 
-    /** pop up an Open3D window */
-    Reprojection reproj = Reprojection();
+    /** link python script for Open3D window */
+    QString path = "/Users/marky/Desktop/BVC/dmr_project/depth_map_reproj";
+    QString  command("python");
+    QStringList params = QStringList() << "reprojection_script.py";
+
+    QProcess *process = new QProcess();
+    process->startDetached(command, params, path);
+    process->waitForFinished();
+    process->close();
 }
 
 
