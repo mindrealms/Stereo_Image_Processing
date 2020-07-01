@@ -46,7 +46,7 @@ void reprojButtonCall(int state, void *data) {
     }
 
     /** pop up an Open3D window */
-//    Reprojection reproj = Reprojection();
+    Reprojection reproj = Reprojection();
 }
 
 
